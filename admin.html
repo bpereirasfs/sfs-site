@@ -124,9 +124,7 @@
   <div class="card" id="loginCard">
     <h2>Acesso</h2>
     <label class="field">Chave de administrador</label>
-    <input type="password" id="adminKey" placeholder="Cola aqui a ADMIN_API_KEY">
-    <label class="field">O teu nome <span style="font-weight:400;color:var(--muted);">(fica no registo de auditoria)</span></label>
-    <input type="text" id="adminUser" placeholder="Ex: Gisele">
+    <input type="password" id="adminKey" placeholder="Cola aqui a tua chave pessoal">
     <div style="margin-top:14px;">
       <button class="primary" id="loginBtn">Entrar</button>
     </div>
@@ -200,7 +198,6 @@ function headers() {
   return {
     'Content-Type': 'application/json',
     'x-admin-key': adminKey,
-    'x-admin-user': adminUser,
   };
 }
 
@@ -208,16 +205,16 @@ function headers() {
 document.getElementById('loginBtn').addEventListener('click', async () => {
   hideError('loginError');
   const key = document.getElementById('adminKey').value.trim();
-  const user = document.getElementById('adminUser').value.trim();
-  if (!key) { showError('loginError', 'Cola a chave de administrador.'); return; }
+  if (!key) { showError('loginError', 'Cola a tua chave de administrador.'); return; }
 
   adminKey = key;
-  adminUser = user || 'desconhecido';
 
-  // valida a chave tentando listar
+  // valida a chave e obtém o nome associado a ela no servidor
   try {
-    const res = await fetch(API_BASE + '/api/admin/reports', { headers: headers() });
+    const res = await fetch(API_BASE + '/api/admin/me', { headers: headers() });
     if (!res.ok) throw new Error('Chave inválida.');
+    const data = await res.json();
+    adminUser = data.name;
     sessionStorage.setItem('sfs_admin_key', adminKey);
     sessionStorage.setItem('sfs_admin_user', adminUser);
     entrarNoPainel();
