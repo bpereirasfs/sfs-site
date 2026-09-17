@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Administração — Canal de Denúncias SFS</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --navy: #0f2a4a;
+    --teal: #0e8f8f;
+    --teal-dark: #0b6f6f;
+    --bg: #f4f6f8;
+    --card: #ffffff;
+    --border: #dde3e8;
+    --text: #24313f;
+    --muted: #66768a;
+    --danger-bg: #fff2f2;
+    --danger-border: #e8b4b4;
+    --danger-text: #9a2b2b;
+    --info-bg: #eef7f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px 64px; }
+  header.top { text-align: center; margin-bottom: 20px; }
+  header.top h1 { font-size: 20px; margin: 8px 0 4px; }
+  header.top p { color: var(--muted); font-size: 13px; margin: 0; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 15px;
+    margin: 0 0 12px;
+    color: var(--navy);
+    border-left: 3px solid var(--teal);
+    padding-left: 10px;
+  }
+
+  label.field { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 4px; }
+  input[type=text], input[type=password], textarea, select {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; font-family: inherit; color: var(--text); background: #fff;
+  }
+  textarea { min-height: 70px; resize: vertical; }
+
+  button.primary {
+    background: var(--teal); color: #fff; border: none; border-radius: 8px;
+    padding: 11px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  button.primary:hover { background: var(--teal-dark); }
+  button.primary:disabled { opacity: .6; cursor: not-allowed; }
+  button.secondary {
+    background: #fff; color: var(--teal-dark); border: 1px solid var(--teal);
+    border-radius: 8px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  button.link {
+    background: none; border: none; color: var(--teal-dark); font-size: 13px;
+    font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline;
+  }
+
+  .error-msg { color: var(--danger-text); font-size: 13px; margin-top: 8px; display: none; }
+  .error-msg.show { display: block; }
+
+  .status-pill {
+    display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  }
+  .status-recebida { background: #fff4e0; color: #8a5a00; }
+  .status-em_analise { background: #e6f0ff; color: #1a4fa0; }
+  .status-concluida { background: #e3f7e6; color: #1a7a2e; }
+  .status-arquivada { background: #eee; color: #666; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr.row { cursor: pointer; }
+  tr.row:hover { background: #f8fafa; }
+  .badge-anon { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #f0f0f0; color: var(--muted); }
+  .protocol-code { font-family: "Courier New", monospace; font-weight: 600; }
+
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .toolbar .who { font-size: 13px; color: var(--muted); }
+
+  .identity-box {
+    background: var(--info-bg); border: 1px solid #bfe0e0; border-radius: 8px;
+    padding: 12px 14px; margin-top: 10px; font-size: 13px;
+  }
+  .desc-box {
+    background: #fafbfc; border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; margin-top: 8px; font-size: 14px; white-space: pre-wrap;
+  }
+  .thread { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+  .msg { padding: 8px 12px; border-radius: 10px; font-size: 13px; max-width: 85%; }
+  .msg.equipa { background: #f2fbfb; align-self: flex-end; }
+  .msg.denunciante { background: #f0f0f0; align-self: flex-start; }
+  .msg .meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  .status-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .status-row select { width: auto; }
+
+  .empty { text-align: center; color: var(--muted); font-size: 13px; padding: 30px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>Painel de Administração</h1>
+    <p>Canal de Ética e Denúncias — SFS Facilities Services</p>
+  </header>
+
+  <!-- ===================== LOGIN ===================== -->
+  <div class="card" id="loginCard">
+    <h2>Acesso</h2>
+    <label class="field">Chave de administrador</label>
+    <input type="password" id="adminKey" placeholder="Cola aqui a ADMIN_API_KEY">
+    <label class="field">O teu nome <span style="font-weight:400;color:var(--muted);">(fica no registo de auditoria)</span></label>
+    <input type="text" id="adminUser" placeholder="Ex: Gisele">
+    <div style="margin-top:14px;">
+      <button class="primary" id="loginBtn">Entrar</button>
+    </div>
+    <div class="error-msg" id="loginError"></div>
+  </div>
+
+  <!-- ===================== LISTA ===================== -->
+  <div id="panelArea" style="display:none;">
+    <div class="toolbar">
+      <span class="who">Sessão: <strong id="whoName"></strong></span>
+      <button class="link" onclick="sair()">Sair</button>
+    </div>
+
+    <div class="card" id="listCard">
+      <h2>Denúncias</h2>
+      <div id="listArea"><div class="empty">A carregar...</div></div>
+    </div>
+
+    <!-- ===================== DETALHE ===================== -->
+    <div class="card" id="detailCard" style="display:none;">
+      <button class="link" onclick="fecharDetalhe()">&larr; Voltar à lista</button>
+      <h2 style="margin-top:14px;">Detalhe da denúncia <span class="protocol-code" id="detProtocol"></span></h2>
+
+      <p style="margin:4px 0;"><strong>Categoria:</strong> <span id="detCategory"></span></p>
+      <p style="margin:4px 0;">Estado: <span class="status-pill" id="detStatusPill"></span></p>
+
+      <label class="field">Relato</label>
+      <div class="desc-box" id="detDescription"></div>
+
+      <div id="identityArea"></div>
+
+      <div class="status-row">
+        <label class="field" style="margin:0;">Alterar estado:</label>
+        <select id="statusSelect">
+          <option value="recebida">Recebida</option>
+          <option value="em_analise">Em análise</option>
+          <option value="concluida">Concluída</option>
+          <option value="arquivada">Arquivada</option>
+        </select>
+        <button class="secondary" onclick="atualizarStatus()">Guardar estado</button>
+      </div>
+      <div class="error-msg" id="detError"></div>
+
+      <label class="field">Conversa com o/a denunciante</label>
+      <div class="thread" id="detThread"></div>
+      <textarea id="newAdminMessage" placeholder="Responder ao denunciante..." style="margin-top:10px;"></textarea>
+      <div style="margin-top:8px;">
+        <button class="secondary" onclick="enviarRespostaAdmin()">Enviar resposta</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API_BASE = 'https://sfs-denuncias-api.fly.dev';
+let adminKey = sessionStorage.getItem('sfs_admin_key') || '';
+let adminUser = sessionStorage.getItem('sfs_admin_user') || '';
+let currentReportId = null;
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideError(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+function headers() {
+  return {
+    'Content-Type': 'application/json',
+    'x-admin-key': adminKey,
+    'x-admin-user': adminUser,
+  };
+}
+
+// ---------- Login ----------
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  hideError('loginError');
+  const key = document.getElementById('adminKey').value.trim();
+  const user = document.getElementById('adminUser').value.trim();
+  if (!key) { showError('loginError', 'Cola a chave de administrador.'); return; }
+
+  adminKey = key;
+  adminUser = user || 'desconhecido';
+
+  // valida a chave tentando listar
+  try {
+    const res = await fetch(API_BASE + '/api/admin/reports', { headers: headers() });
+    if (!res.ok) throw new Error('Chave inválida.');
+    sessionStorage.setItem('sfs_admin_key', adminKey);
+    sessionStorage.setItem('sfs_admin_user', adminUser);
+    entrarNoPainel();
+  } catch (err) {
+    showError('loginError', 'Não foi possível autenticar. Verifica a chave.');
+  }
+});
+
+function entrarNoPainel() {
+  document.getElementById('loginCard').style.display = 'none';
+  document.getElementById('panelArea').style.display = 'block';
+  document.getElementById('whoName').textContent = adminUser;
+  carregarLista();
+}
+
+function sair() {
+  sessionStorage.removeItem('sfs_admin_key');
+  sessionStorage.removeItem('sfs_admin_user');
+  adminKey = ''; adminUser = '';
+  document.getElementById('panelArea').style.display = 'none';
+  document.getElementById('loginCard').style.display = 'block';
+}
+
+// se já havia sessão guardada, entra direto
+if (adminKey) { entrarNoPainel(); }
+
+// ---------- Lista ----------
+async function carregarLista() {
+  const area = document.getElementById('listArea');
+  area.innerHTML = '<div class="empty">A carregar...</div>';
+  try {
+    const res = await fetch(API_BASE + '/api/admin/reports', { headers: headers() });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+
+    if (!data.length) {
+      area.innerHTML = '<div class="empty">Ainda não há denúncias registadas.</div>';
+      return;
+    }
+
+    const statusLabel = { recebida: 'Recebida', em_analise: 'Em análise', concluida: 'Concluída', arquivada: 'Arquivada' };
+
+    let html = '<table><thead><tr><th>Protocolo</th><th>Categoria</th><th>Estado</th><th>Identificação</th><th>Recebida em</th></tr></thead><tbody>';
+    data.forEach(r => {
+      html += `<tr class="row" onclick="abrirDetalhe('${r.id}')">
+        <td class="protocol-code">${r.protocol_code}</td>
+        <td>${escapeHtml(r.category)}</td>
+        <td><span class="status-pill status-${r.status}">${statusLabel[r.status] || r.status}</span></td>
+        <td><span class="badge-anon">${r.is_anonymous ? 'Anônimo' : 'Identificado'}</span></td>
+        <td>${new Date(r.created_at).toLocaleString('pt-BR')}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    area.innerHTML = html;
+  } catch (err) {
+    area.innerHTML = '<div class="empty">Erro ao carregar denúncias. Verifica a chave de acesso.</div>';
+  }
+}
+
+// ---------- Detalhe ----------
+async function abrirDetalhe(id) {
+  currentReportId = id;
+  document.getElementById('listCard').style.display = 'none';
+  document.getElementById('detailCard').style.display = 'block';
+  document.getElementById('identityArea').innerHTML = '';
+  hideError('detError');
+  await carregarDetalhe(false);
+}
+
+function fecharDetalhe() {
+  document.getElementById('detailCard').style.display = 'none';
+  document.getElementById('listCard').style.display = 'block';
+  carregarLista();
+}
+
+async function carregarDetalhe(revelarIdentidade) {
+  try {
+    const url = API_BASE + '/api/admin/reports/' + currentReportId + (revelarIdentidade ? '?revelarIdentidade=true' : '');
+    const res = await fetch(url, { headers: headers() });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+
+    const statusLabel = { recebida: 'Recebida', em_analise: 'Em análise', concluida: 'Concluída', arquivada: 'Arquivada' };
+
+    document.getElementById('detProtocol').textContent = data.protocolCode;
+    document.getElementById('detCategory').textContent = data.category;
+    const pill = document.getElementById('detStatusPill');
+    pill.textContent = statusLabel[data.status] || data.status;
+    pill.className = 'status-pill status-' + data.status;
+    document.getElementById('detDescription').textContent = data.description;
+    document.getElementById('statusSelect').value = data.status;
+
+    const identityArea = document.getElementById('identityArea');
+    if (data.isAnonymous) {
+      identityArea.innerHTML = '<div class="identity-box">Esta pessoa optou por não se identificar.</div>';
+    } else if (data.identity) {
+      identityArea.innerHTML = `<div class="identity-box"><strong>Identificação:</strong><br>Nome: ${escapeHtml(data.identity.name || '—')}<br>Contacto: ${escapeHtml(data.identity.contact || '—')}</div>`;
+    } else {
+      identityArea.innerHTML = '<div class="identity-box">Denunciante optou por se identificar. <button class="link" onclick="revelarIdentidade()">Ver identificação</button> — esta ação fica registada em auditoria.</div>';
+    }
+
+    const thread = document.getElementById('detThread');
+    thread.innerHTML = '';
+    (data.messages || []).forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'msg ' + m.sender;
+      div.innerHTML = escapeHtml(m.message) + '<div class="meta">' + (m.sender === 'equipa' ? 'Equipe' : 'Denunciante') + ' · ' + new Date(m.created_at).toLocaleString('pt-BR') + '</div>';
+      thread.appendChild(div);
+    });
+  } catch (err) {
+    showError('detError', 'Erro ao carregar detalhe.');
+  }
+}
+
+function revelarIdentidade() {
+  carregarDetalhe(true);
+}
+
+async function atualizarStatus() {
+  hideError('detError');
+  const status = document.getElementById('statusSelect').value;
+  try {
+    const res = await fetch(API_BASE + '/api/admin/reports/' + currentReportId + '/status', {
+      method: 'PATCH',
+      headers: headers(),
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) throw new Error();
+    await carregarDetalhe(false);
+  } catch (err) {
+    showError('detError', 'Erro ao atualizar o estado.');
+  }
+}
+
+async function enviarRespostaAdmin() {
+  hideError('detError');
+  const message = document.getElementById('newAdminMessage').value.trim();
+  if (!message) return;
+  try {
+    const res = await fetch(API_BASE + '/api/admin/reports/' + currentReportId + '/mensagens', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ message }),
+    });
+    if (!res.ok) throw new Error();
+    document.getElementById('newAdminMessage').value = '';
+    await carregarDetalhe(false);
+  } catch (err) {
+    showError('detError', 'Erro ao enviar resposta.');
+  }
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>
